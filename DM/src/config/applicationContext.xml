@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+         http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+         http://www.springframework.org/schema/context
+         http://www.springframework.org/schema/context/spring-context-4.2.xsd
+         http://www.springframework.org/schema/tx
+     	 http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+         http://www.springframework.org/schema/aop 
+         http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		 http://www.springframework.org/schema/mvc 
+		 http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd">
+
+	<!-- 开启IOC注解扫描 -->
+	<context:component-scan base-package="com.vpm" />
+
+	<!-- 开启MVC注解扫描 -->
+	<mvc:annotation-driven />
+
+	<!-- 以下为数据库和hibernate配置 -->
+	<context:property-placeholder location="classpath:config/db.properties" />
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.mysql.driverClassName}" />
+		<property name="url" value="${jdbc.mysql.url}" />
+		<property name="username" value="${jdbc.mysql.username}" />
+		<property name="password" value="${jdbc.mysql.password}" />
+		<property name="maxActive" value="100"></property>
+		<property name="minIdle" value="20"></property>
+		<property name="maxWait" value="3000"></property>
+		<property name="initialSize" value="30"></property>
+	</bean>
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.vpm.entity</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<!--<prop key="hibernate.hbm2ddl.auto">update</prop>  -->
+			</props>
+		</property>
+	</bean>
+	<bean id="hibernateTemplateMysql" class="org.springframework.orm.hibernate5.HibernateTemplate">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	
+	<!-- 定义事务管理器（声明式的事务） -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="interceptorPointCuts"
+			expression="execution(* com.vpm.service..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="interceptorPointCuts" />
+	</aop:config>
+	<!-- 完成对数据源的事务管理 
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager"
+		p:sessionFactory-ref="sessionFactory" />
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="txPointcut"
+			expression="execution(* com.xintong.push.core.service..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
+	</aop:config>
+	 开启基于注解的事务管理驱动 
+	<tx:annotation-driven transaction-manager="txManager" />-->
+
+
+
+	<!-- 以下为视图映射配置 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/" />
+	    <property name="suffix" value=".html" />
+	</bean>
+
+  <bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设置文件上传的最大尺寸为5MB -->
+		<property name="maxUploadSize">
+			<value>5242880</value>
+		</property>
+	</bean>
+	<!-- 
+	<property name="prefix" value="/WEB-INF/views/" />
+	    <property name="suffix" value=".html" />
+	     
+		<property name="suffix" value=".html" />
+		<property name="suffix" value=".jsp" />其他配置 -->
+	<!-- 静态文件访问
+	<mvc:resources location="/css/" mapping="/css/**" />
+	<mvc:resources location="/WEB-INF/jsp/" mapping="/WEB-INF/jsp/**" />
+	<mvc:resources location="/" mapping="/**" />
+	 -->
+	<mvc:default-servlet-handler />
+	<mvc:resources location="/upload/image/" mapping="/upload/image/**" />
+	<mvc:resources location="/js/" mapping="/js/**" />
+	<mvc:resources location="/" mapping="/**" />
+	
+</beans>

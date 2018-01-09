@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Spring4Hibernate5</title>
+</head>
+<script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.min.js"></script>
+<script type="text/javascript" src="js/ajaxfileupload.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+	finduser();
+	display();
+	findp();
+	$("#message").hide();
+	$("#permiss").hide();
+	$("#user").hide();
+	$("#document").hide();
+	//选择权限 
+			function findp(){
+		  $.get("/DM/findp",function(data,status){
+		    $("#permiss").html("");
+		 	$.each( data, function(index, content){ 
+			    	var tr_body=$("<tr><td></td><td><input type='checkbox' name='pid'value='"+content.p_id+"'/>"+ content.permissions
+			    			+"</td></tr>");
+			    	$("#permiss").append(tr_body);
+			    });
+		    $("#permiss").show();
+		  });
+		}
+	
+	//查看父文件夹 <td><a onclick='finddoc' href='javascript:void(0)'>Edit</a>
+	function display(){
+		var url;
+	    url="/DM/findD"
+		$.get(url,function(data,status){
+			    $("#document").html("");
+				 $.each(data, function(index, content){ 
+			    	var tbody=$("<tr><td><input type='radio' name='doid' value='" + content.d_id
+			    			+ "'/></td><td>"+ content.d_name
+			    			+"</td></tr>"
+			    			+"<tr><td></td><td><table id='doc'></table></td></tr>");
+			    	$("#document").append(tbody);
+			    });
+			    $("#document").show();
+	     });
+	}
+	//显示文件
+	function fileshow(dd_id){
+		var url;
+	    url="/DM/findFile?dd_id="+dd_id
+		$.get(url,function(data,status){
+			    $("#file").html("");
+				 $.each(data, function(index, content){ 
+			    	var tbody=$("<tr><td><input type='radio' name='foid' value='" + content.f_id
+			    			+ "'/></td><td>"+ content.f_name
+			    			+"</td><td><a href='"+content.f_url+"'>查看</a>"
+			    			+"</td></tr>");
+			    	$("#file").append(tbody);
+			    });
+			    $("#file").show();
+	     });
+	}
+	
+	//查看子文件夹 
+	$("#finddoc").click(
+			function(){
+		$("input[name='doid']:checked").each(function(){  
+			dd_id=$(this).val();
+			});
+	    $.post("/DM/findDs", {
+	    	dd_id: dd_id,
+	    	p_id:4
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				$("#doc").html("");
+				 $.each(data, function(index, content){ 
+			    	var tbody=$("<tr><td><input type='radio' name='doid' value='" + content.d_id
+			    			+ "'/></td><td>"+ content.d_name
+			    			+"</td></tr>");
+			    	$("#doc").append(tbody);
+			    });
+				 var tbodyd=$("<tr><td><table id='file'></table></td></tr>");
+				 $("#doc").append(tbodyd);
+			     $("#doc").show();
+			}
+			 fileshow(dd_id);
+		});
+});
+	
+	//查看文件夹的权限
+	$("#finddup").click(function(){
+		var url;
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+	    url="/DM/findDup?d_id="+d_id
+	    $.get(url,function(data,status){
+		    $("#dup").html("");
+			 $.each(data, function(index, content){ 
+		    	var tbody=$("<tr><td>来自文件夹：</td><td>" + content.document.d_name
+		    			+ "</td><td>用户：</td><td>" + content.user.u_name
+		    			+ "</td><td>权限为：</td><td>"+ content.permissions.permissions
+		    			+"</td></tr>");
+		    	$("#dup").append(tbody);
+		    });
+		    $("#dup").show();
+     });
+});
+
+	//查看文件     的权限
+	$("#finddupf").click(function(){
+		var url;
+		$("input[name='foid']:checked").each(function(){  
+			f_id=$(this).val();
+			});
+	    url="/DM/findDupf?f_id="+f_id
+	    $.get(url,function(data,status){
+		    $("#dupf").html("");
+			 $.each(data, function(index, content){ 
+		    	var tbody=$("<tr><td>来自文件：</td><td>" + content.file.f_name
+		    			+ "</td><td>用户：</td><td>" + content.user.u_name
+		    			+ "</td><td>权限为：</td><td>"+ content.permissions.permissions
+		    			+"</td></tr>");
+		    	//var tbodyd=$("<tr><td>来自文件夹：</td><td>" //+ content.document.d_name
+		    	//		+ "</td><td>用户：</td><td>" + content.user.u_name
+		    	//		+ "</td><td>权限为：</td><td>"+ content.permissions.permissions
+		    	//		+"</td></tr>");
+		    	$("#dupf").append(tbody);
+		    	//$("#dupf").append(tbodyd);
+		    });
+		    $("#dupf").show();
+     });
+});
+//查看用户
+		function finduser(){
+		  $.get("/DM/findalluser",function(data,status){
+		    $("#user").html("");
+		 	$.each( data, function(index, content){ 
+			    	var tr_body=$("<tr><td><input type='radio' name='uid' value='"+content.u_id+"'/>"
+			    			+"</td><td>"+content.u_name
+			    			+"</td></tr>");
+			    	$("#user").append(tr_body);
+			    });
+		    $("#user").show();
+		  });
+		}
+//查看留言
+$("#findl").click(function() {
+	   var d_id;
+	   var url;
+	$("input[name='doid']:checked").each(function(){  
+		d_id=$(this).val();
+		});
+	url="/DM/findl?d_id="+d_id;
+	$.get(url, function(data, status) {
+		$("#message").html("");
+	 	$.each( data, function(index, content){ 
+		    	var tr_body=$("<tr><td>"+content.l_content
+		    			+"</td></tr>");
+		    	$("#message").append(tr_body);
+		    });
+	    $("#message").show();
+	});
+})
+
+//查看文件留言
+$("#findlf").click(function() {
+	   var f_id;
+	   var url;
+	$("input[name='foid']:checked").each(function(){  
+		f_id=$(this).val();
+		});
+	url="/DM/findlf?f_id="+f_id;
+	$.get(url, function(data, status) {
+		$("#message").html("");
+	 	$.each( data, function(index, content){ 
+		    	var tr_body=$("<tr><td>"+content.l_content
+		    			+"</td></tr>");
+		    	$("#message").append(tr_body);
+		    });
+	    $("#message").show();
+	});
+})
+//添加父文件夹 
+	$("#addD").click(function(){
+		var str1="";
+		$("input[name='dname']").each(function(){  
+			str1+=$(this).val();
+   		});
+		$.post("/DM/addD", {
+			d_name: str1,
+			inherit:0
+		}, function(data, status) {
+			alert("创建文件夹成功");
+			display();
+		});
+    });
+//新增子文件夹 
+	$("#addDS").click(function(){
+	var str1="";
+	var dd_id;
+	$("input[name='doid']:checked").each(function(){  
+		dd_id=$(this).val();
+		});
+	$("input[name='dname']").each(function(){  
+		str1+=$(this).val();
+		});
+	$.post("/DM/addDS", {
+		dd_id : dd_id,
+		p_id : 1,
+		inherit:1,
+		d_name:str1
+	}, function(data, status) {
+		if(data=="20"){
+			alert("您没有该权限");
+		}
+		else{
+			alert("新增文件夹成功");
+			display();
+		}
+	});
+});
+	
+//上传文件
+  $("#upload").click(function(){
+	 var url = "/DM/addFile";
+	 //alert("111");
+	 var d_id;
+	 $("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+	    $.ajaxFileUpload({
+	        url : url,
+	        secureuri:false,
+	        type : 'POST',
+	        dataType:"json",
+	        fileElementId : "ffile",  //这里对应html中上传file的id
+	        contentType:"application/json;charset=UTF-8",
+	        data:{
+				d_id : d_id,
+				inherit:1,
+				p_id : 1
+			},
+	        success: function(data,status){
+	        	if(data=="20"){
+					alert("您没有该权限");
+				}
+				else{
+					alert("上传成功");
+				}
+	        	
+	        },
+	    })
+});
+  //文件添加留言
+  $("#addlF").click(function() {
+	   var f_id;
+	   var url;
+	   var st1="";
+	$("input[name='lname']").each(function(){  
+		st1=$(this).val();
+		});
+	$("input[name='foid']:checked").each(function(){  
+		f_id=$(this).val();
+		});
+	url="/DM/addLF?f_id="+f_id+"&l_content="+st1;
+	$.get(url, function(data, status) {
+		alert("添加留言成功");
+	});
+});
+	
+	//添加留言
+	 $("#addl").click(function() {
+		   var d_id;
+		   var url;
+		   var st1="";
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+		$("input[name='lname']").each(function(){  
+			st1=$(this).val();
+			});
+		url="/DM/addLD?d_id="+d_id+"&l_content="+st1;
+		//if(f_id=""){
+		//	url="/DM/addLD?d_id="+d_id+"&l_content="+st1;
+		//}
+		//else{
+		//	url="/DM/addLF?f_id="+f_id+"&l_content="+st1;
+		//}
+		$.get(url, function(data, status) {
+			alert("添加留言成功");
+		});
+	});
+//删除文件夹 
+$("#delete").click(function() {
+		   var d_id;
+		   alert("111");
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+		$.post("/DM/deleteD", {
+			d_id : d_id,
+			p_id : 2
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				alert("删除成功");
+			}
+		});
+	});
+//添加权限 
+	 $("#addDup").click(function() {
+		   var d_id;
+		   var u_id;
+		   var st1="";
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$("input[name='pid']:checked").each(function(){  
+			st1+=$(this).val()+",";
+			});
+		//alert("111");
+		$.post("/DM/addDupD", {
+			d_id : d_id,
+			u_id: u_id,
+			listp: st1
+		}, function(data, status) {
+			alert("设置权限成功");
+		});
+	});
+	
+	 $("#addDupf").click(function() {
+		   var f_id;
+		   var u_id;
+		   var st1="";
+		$("input[name='foid']:checked").each(function(){  
+			f_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$("input[name='pid']:checked").each(function(){  
+			st1+=$(this).val()+",";
+			});
+		$.post("/DM/addDupF", {
+			f_id : f_id,
+			u_id: u_id,
+			listp: st1
+		}, function(data, status) {
+			alert("设置权限成功");
+		});
+	});
+//设置权限继承
+	 $("#inherit").click(function() {
+		   var d_id;
+		   $("input[name='doid']:checked").each(function(){  
+				d_id=$(this).val();
+				});
+		$.post("/DM/inherit", {
+			d_id : d_id,
+			inherit:1
+		}, function(data, status) {
+			alert("设置权限为继承父权限");
+		});
+	});
+	 $("#inheritf").click(function() {
+		   var f_id;
+		   $("input[name='foid']:checked").each(function(){  
+				f_id=$(this).val();
+				});
+		$.post("/DM/inheritf", {
+			f_id : f_id,
+			inherit:1
+		}, function(data, status) {
+			alert("设置权限为继承父权限");
+		});
+	});
+	//设置权限不继承
+	 $("#noinherit").click(function() {
+		   var d_id;
+		   $("input[name='doid']:checked").each(function(){  
+				d_id=$(this).val();
+				});
+		$.post("/DM/inherit", {
+			d_id : d_id,
+			inherit:2
+		}, function(data, status) {
+			alert("设置权限为不继承父权限");
+		});
+	});
+	//设置权限不继承    文件
+	 $("#noinheritf").click(function() {
+		   var f_id;
+		   $("input[name='foid']:checked").each(function(){  
+				f_id=$(this).val();
+				});
+		$.post("/DM/inheritf", {
+			f_id : f_id,
+			inherit:2
+		}, function(data, status) {
+			alert("设置权限为不继承父权限");
+		});
+	});
+	
+		//修改权限 
+	 $("#updateDup").click(function() {
+		   var d_id;
+		   var u_id;
+		   var st1="";
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$("input[name='pid']:checked").each(function(){  
+			st1+=$(this).val()+",";
+			});
+		$.post("/DM/updateDup", {
+			d_id : d_id,
+			u_id: u_id,
+			p_id: 3,
+			listp: st1
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				alert("修改权限成功");
+			}
+			
+		});
+	});
+		
+	//修改权限 WENJIAN
+	 $("#updateDupf").click(function() {
+		   var f_id;
+		   var u_id;
+		   var st1="";
+		$("input[name='foid']:checked").each(function(){  
+			f_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$("input[name='pid']:checked").each(function(){  
+			st1+=$(this).val()+",";
+			});
+		$.post("/DM/updateDupf", {
+			f_id : f_id,
+			u_id: u_id,
+			p_id: 3,
+			listp: st1
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				alert("修改权限成功");
+			}
+			
+		});
+	});
+		//清除用户权限
+	 $("#cleanDup").click(function() {
+		   var d_id;
+		   var u_id;
+		$("input[name='doid']:checked").each(function(){  
+			d_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$.post("/DM/cleanDup", {
+			d_id : d_id,
+			u_id: u_id,
+			p_id: 3,
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				alert("清除权限成功");
+			}
+			
+		});
+	});
+	//清除用户权限   文件
+	 $("#cleanDupf").click(function() {
+		   var f_id;
+		   var u_id;
+		$("input[name='foid']:checked").each(function(){  
+			f_id=$(this).val();
+			});
+		$("input[name='uid']:checked").each(function(){  
+			u_id=$(this).val();
+			});
+		$.post("/DM/cleanDupf", {
+			f_id : f_id,
+			u_id: u_id,
+			p_id: 3,
+		}, function(data, status) {
+			if(data=="20"){
+				alert("您没有该权限");
+			}
+			else{
+				alert("清除权限成功");
+			}
+			
+		});
+	});
+		
+});
+
+</script>
+<body>
+			<div>
+			<table><tr><td>请输入文件名</td>
+			<td><input type="text" name="dname"/></td>
+			<td><button id='addD'>添加父文件夹</button></td><td><button id="addDS">添加子文件夹</button></td></tr>
+			</table></div>
+			<table id="document">
+			</table>
+			<!--  -->
+			<button id="finddoc">查看</button><button id="delete">删除</button>
+			<div><button id="finddup">显示权限</button><button id="inherit">继承父类权限</button><button id="noinherit">不继承父类权限</button></div>
+			<div><button id="finddupf">文件权限</button><button id="inheritf">文件继承父类</button><button id="noinheritf">文件不继承父类</button></div>
+			
+			<!--  -->
+			<table id="dup"></table>
+			<table id="dupf"></table>
+			
+			<div><button id='addDup'>添加权限</button><button id='updateDup'>修改权限</button>
+			<button id='cleanDup'>清除该用户权限</button>
+			</div>
+			<div><button id='addDupf'>文件添加权限</button><button id='updateDupf'>文件修改权限</button>
+			<button id='cleanDupf'>文件清除该用户权限</button>
+			</div>
+			<div>
+			<table><tr><td><button id="addl">添加留言</button>
+			</td><td><input type="text" name="lname"/></td>
+			<td><button id="findl">查看留言</button></td><td><button id="addlF">文件添加留言</button>
+			</td><td><button id="findlf">查看文件留言</button></table>
+			
+			<table><tr><td><input type="file" id="ffile" name="ffile"/>
+			</td>
+			<td><button id='upload'>上传</button></td>
+			</tr></table>
+			
+			</div>
+			<table id="message">
+			</table>
+			<div>
+			<div style="float:left; width:100px; height:100px; border:2px ;">
+			<table id="user"></table></div>
+			<div style="float:left; width:300px; height:100px; border-right:2px ; border-top:2px ; border-bottom:2px ;">
+			<table id="permiss"></table>
+			</div></div>
+			<!-- <li>doc1
+			<ul>
+			
+			<ul>
+			<li>doc11</li>
+			<li>doc12</li>
+			<li>doc13</li>
+			</ul>
+			</li>
+			<li>doc2
+			<ul>
+			<li>doc21</li>
+			<li>doc22</li>
+			<li>doc23</li>
+			</ul>
+			</li>
+			<li>doc3</li>
+			</ul><div>
+			<div>doc1
+			<div>doc11</div>
+			<div>doc12</div>
+			<div>doc13</div>
+			</div>
+			<div>doc2</div>
+			<div>doc3</div>
+			</div>
+			 -->
+			
+			
+</body>
+</html>
